@@ -5,14 +5,15 @@ const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
+const router = require('koa-router')()
 
-const index = require('./routes/index')
 const users = require('./routes/users')
 const log4js = require('./utils/log4j')
 
 // error handler
 onerror(app)
 
+require('./config/db')
 // middlewares
 app.use(bodyparser({
   enableTypes: ['json', 'form', 'text']
@@ -32,14 +33,17 @@ app.use(views(__dirname + '/views', {
 
 // logger
 app.use(async (ctx, next) => {
+  log4js.info(`get params: ${JSON.stringify(ctx.request.query)}`)
+  log4js.info(`post params: ${JSON.stringify(ctx.request.body)} }`)
   await next()
-  log4js.info('log output')
 })
 
-// routes
-app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
-
+// 一级路由
+router.prefix('/api')
+// 二级路由
+router.use(users.routes(), users.allowedMethods())
+// 全局挂载
+app.use(router.routes(), users.allowedMethods())
 // error-handling
 app.on('error', (err, ctx) => {
   // console.error('server error', err, ctx)
