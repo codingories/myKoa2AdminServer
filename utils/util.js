@@ -39,8 +39,9 @@ module.exports = {
   fail(msg = '', code = CODE.BUSINESS_ERROR, data = "" ) {
     log4js.debug(msg);
     return {
-      code, msg
+      code, msg, data
     }
-  }
+  },
+  CODE
 }
 

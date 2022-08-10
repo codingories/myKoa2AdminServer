@@ -9,7 +9,8 @@ const router = require('koa-router')()
 const jwt = require('jsonwebtoken')
 const users = require('./routes/users')
 const log4js = require('./utils/log4j')
-
+const util = require('./utils/util')
+const koajwt = require('koa-jwt')
 // error handler
 onerror(app)
 
@@ -30,16 +31,27 @@ app.use(views(__dirname + '/views', {
 app.use(async (ctx, next) => {
   log4js.info(`get params: ${JSON.stringify(ctx.request.query)}`)
   log4js.info(`post params: ${JSON.stringify(ctx.request.body)} }`)
-  await next()
+  await next().catch((err) => {
+    if (err.status === 401) {
+      ctx.status = 200
+      ctx.body = util.fail('Token认证失败', util.CODE.AUTH_ERROR)
+    } else {
+      throw err;
+    }
+  })
 })
 
 // 一级路由
+app.use(koajwt({secret: 'secret'}).unless({
+  path: [/^\/api\/users\/login/]
+}))
 router.prefix('/api')
 
 router.get('/leave/count', (ctx) => {
-  const token = ctx.request.headers.authorization.split(' ')[1]
-  console.log('token', token)
-  ctx.body = jwt.verify(token, 'secret')
+  // const token = ctx.request.headers.authorization.split(' ')[1]
+  // console.log('token', token)
+  // ctx.body = jwt.verify(token, 'secret')
+  ctx.body = 'body'
 })
 
 // 二级路由
