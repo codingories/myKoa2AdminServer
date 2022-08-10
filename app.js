@@ -6,7 +6,7 @@ const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const router = require('koa-router')()
-
+const jwt = require('jsonwebtoken')
 const users = require('./routes/users')
 const log4js = require('./utils/log4j')
 
@@ -27,11 +27,6 @@ app.use(views(__dirname + '/views', {
 }))
 
 
-// app.use(()=>{
-//   ctx.body='hello'
-// })
-
-// logger
 app.use(async (ctx, next) => {
   log4js.info(`get params: ${JSON.stringify(ctx.request.query)}`)
   log4js.info(`post params: ${JSON.stringify(ctx.request.body)} }`)
@@ -40,6 +35,13 @@ app.use(async (ctx, next) => {
 
 // 一级路由
 router.prefix('/api')
+
+router.get('/leave/count', (ctx) => {
+  const token = ctx.request.headers.authorization.split(' ')[1]
+  console.log('token', token)
+  ctx.body = jwt.verify(token, 'secret')
+})
+
 // 二级路由
 router.use(users.routes(), users.allowedMethods())
 // 全局挂载
