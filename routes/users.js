@@ -2,7 +2,11 @@
  * 用户管理模块
  */
 const router = require('koa-router')()
+const md5 = require('md5')
+
 const User = require('../models/userSchema')
+const Counter = require('../models/counterSchema')
+
 const util = require('../utils/util')
 const jwt = require('jsonwebtoken')
 router.prefix('/users')
@@ -98,6 +102,39 @@ router.post('/operate', async (ctx) => {
     if (!userName || !userEmail || !deptId) {
       ctx.body = util.fail('参数错误', util.CODE.PARAM_ERROR)
       return
+    }
+    // 先查找下看看有没有重复的用户名和邮箱，有就返回报错
+    const res = await User.findOne(
+      { $or: [{ userName }, { userEmail }] },
+      '_id userName userEmail'
+    )
+    if (res) {
+      ctx.body = util.fail(
+        `系统监测到有重复的用户，信息如下：${res.userName} - ${res.userEmail}`
+      )
+    } else {
+      try {
+        // 这里开始新建
+        // 每次去数据库查找一个id，并加1，{new: true}返回最新的值
+        const doc = await Counter.findOneAndUpdate({_id: 'userId'}, {$inc: {sequence_value: 1}}, {new: true})
+        const user = new User({
+          userId: doc.sequence_value, //需要手动增加一个自增的ID
+          userName,
+          userPwd: md5('123456'),
+          userEmail,
+          role: 1, //默认普通用户
+          roleList,
+          job,
+          state,
+          deptId,
+          mobile
+        })
+        user.save();
+        ctx.body = util.success('', '用户创建成功');
+      } catch (error) {
+        ctx.body = util.fail(error.stack, '用户创建失败');
+      }
+
     }
   } else {
     if (!deptId) {
