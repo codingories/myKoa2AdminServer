@@ -7,10 +7,11 @@ const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const router = require('koa-router')()
 const jwt = require('jsonwebtoken')
-const users = require('./routes/users')
 const log4js = require('./utils/log4j')
 const util = require('./utils/util')
 const koajwt = require('koa-jwt')
+const users = require('./routes/users')
+const menus = require('./routes/menus')
 // error handler
 onerror(app)
 
@@ -56,6 +57,8 @@ router.get('/leave/count', (ctx) => {
 
 // 二级路由
 router.use(users.routes(), users.allowedMethods())
+router.use(menus.routes(), menus.allowedMethods())
+
 // 全局挂载
 app.use(router.routes(), users.allowedMethods())
 // error-handling

@@ -22,14 +22,13 @@ router.post('/login', async (ctx) => {
     // const res = await User.findOne({userName, userPwd}, {'userId': 1, '_id': 0})
     // 第三种方式select
     // const res = await User.findOne({userName, userPwd}).select('userId')
-
     // 生成token, 根据密钥secret加密， 时间是1h
-    const data = res._doc
-    const token = jwt.sign({
-      data,
-    }, 'secret', {expiresIn: '1h'})
+
     if (res) {
-      data.token = token
+      const data = res._doc
+      data.token = jwt.sign({
+        data,
+      }, 'secret', {expiresIn: '1h'})
       // ctx.body = util.success(res)
       ctx.body = util.success(data)
     } else {
