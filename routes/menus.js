@@ -11,18 +11,28 @@ router.get('/list', async (ctx) => {
   if (menuName) params.menuName = menuName
   if (menuState) params.menuState = menuState
   let rootList = (await Menu.find(params)) || []
-  const permissionList = util.getTreeMenu(rootList, null, [])
-  ctx.body = util.success(permissionList)
+  // const permissionList = util.getTreeMenu(rootList, null, [])
+  const permissionList = getTreeMenu(rootList, null, [])
+
+  ctx.body = util.success(rootList)
 })
 
 // 递归拼接树形列表
-// function getTreeMenu(rootList, id, list) {
-//   for (let i = 0; i < rootList.length; i++) {
-//     let item = rootList[i]
-//     if (String(item.parentId.slice().pop()) == String(id)) {
-//       list.push(item._doc)
-//     }
-//   }
+function getTreeMenu(rootList, id, list) {
+  for (let i = 0; i < rootList.length; i++) {
+    let item = rootList[i]
+    if (item.parentId.pop() === id) {
+      console.log('item => ', item)
+      list.push(item)
+    }
+    // if (String(item.parentId.slice().pop()) == String(id)) {
+    //   list.push(item._doc)
+    // }
+  }
+  list.map(item => {
+    item.children = []
+    getTreeMenu(rootList, item._id)
+  })
 //   list.map((item) => {
 //     item.children = []
 //     getTreeMenu(rootList, item._id, item.children)
@@ -34,7 +44,7 @@ router.get('/list', async (ctx) => {
 //     }
 //   })
 //   return list
-// }
+}
 
 // 菜单编辑、删除、新增功能
 router.post('/operate', async (ctx) => {
