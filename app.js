@@ -12,6 +12,7 @@ const util = require('./utils/util')
 const koajwt = require('koa-jwt')
 const users = require('./routes/users')
 const menus = require('./routes/menus')
+const roles = require('./routes/roles')
 // error handler
 onerror(app)
 
@@ -58,6 +59,7 @@ router.get('/leave/count', (ctx) => {
 // 二级路由
 router.use(users.routes(), users.allowedMethods())
 router.use(menus.routes(), menus.allowedMethods())
+router.use(roles.routes(), roles.allowedMethods())
 
 // 全局挂载
 app.use(router.routes(), users.allowedMethods())

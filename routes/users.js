@@ -28,7 +28,7 @@ router.post('/login', async (ctx) => {
       const data = res._doc
       data.token = jwt.sign({
         data,
-      }, 'secret', {expiresIn: '1h'})
+      }, 'secret', {expiresIn: '24h'})
       // ctx.body = util.success(res)
       ctx.body = util.success(data)
     } else {
