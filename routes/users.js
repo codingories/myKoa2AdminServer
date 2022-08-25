@@ -104,7 +104,7 @@ router.post('/operate', async (ctx) => {
     }
     // 先查找下看看有没有重复的用户名和邮箱，有就返回报错
     const res = await User.findOne(
-      { $or: [{ userName }, { userEmail }] },
+      {$or: [{userName}, {userEmail}]},
       '_id userName userEmail'
     )
     if (res) {
@@ -149,6 +149,16 @@ router.post('/operate', async (ctx) => {
     } catch (error) {
       ctx.body = util.fail(error.state, '更新失败')
     }
+  }
+})
+
+router.get('/all/list', async (ctx) => {
+  // 获取全量用户列表
+  try {
+    const list = await User.find({}, "userId userName userEmail")
+    ctx.body = util.success(list)
+  } catch (error) {
+    ctx.body = util.fail(error.stack)
   }
 })
 
