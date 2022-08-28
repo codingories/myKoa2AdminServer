@@ -14,15 +14,42 @@ const jwt = require('jsonwebtoken')
 router.prefix('/leave')
 
 router.get('/list', async (ctx) => {
-  const {applyState} = ctx.request.query;
+  let {applyState, type} = ctx.request.query;
+  console.log('applyState fuck -->', applyState)
   const {page, skipIndex} = util.pager(ctx.request.query)
   let authorization = ctx.request.headers.authorization
   let {data} = util.decoded(authorization)
   try {
-    let params = {
-      "applyUser.userId": data.userId
+    let params = {};
+    if (type === 'approve') {
+      if (applyState == 1) {
+        console.log('1111fuck')
+        // 审核人是当前的登录用户
+        params.curAuditUserName = data.userName
+        params.applyState = 1
+      } else if (applyState > 1) {
+        console.log('2222fuck')
+        // 这里用到mongodb里面的子文档查询，非常重要
+        params = {
+          // 子文档里面的userId 等于 当前的登录人
+          "auditFlows.userId": data.userId,
+          applyState
+        }
+      } else {
+        console.log('3333fuck')
+        params = {
+          // 子文档里面的userId 等于 当前的登录人
+          "auditFlows.userId": data.userId,
+        }
+      }
+    } else {
+      console.log('4444fuck')
+      params = {
+        "applyUser.userId": data.userId
+      }
     }
     if (applyState) params.applyState = applyState;
+    console.log('fuck params,', params)
     const query = Leave.find(params)
     const list = await query.skip(skipIndex).limit(page.pageSize)
     const total = await Leave.countDocuments(params)
@@ -66,12 +93,12 @@ router.post('/operate', async (ctx) => {
     params.auditUsers = auditUsers
     params.curAuditUserName = dept.userName;
     params.auditFlows = auditFlows
-    params.auditFlows = []
     params.applyUser = {
       userId: data.userId,
       userName: data.userName,
       userEmail: data.userEmail
     }
+    console.log('fuck params', params)
     let res = await Leave.create(params)
     ctx.body = util.success("", "创建成功")
   } else {
