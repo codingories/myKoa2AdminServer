@@ -38,33 +38,46 @@ router.get('/list', async (ctx) => {
   }
 })
 
-router.get('/operate', async (ctx) => {
-  const {_id, action, ...params} = ctx.request.query;
+router.post('/operate', async (ctx) => {
+  const {_id, action, ...params} = ctx.request.body;
   let authorization = ctx.request.headers.authorization
   let {data} = util.decoded(authorization)
-  // XJ202220727, 生成请假单号
-  let orderNo = "XJ"
-  orderNo += util.formatDate(new Date(), "yyyyMMdd")
-  const total = Leave.countDocuments()
-  params.orderNo = orderNo + total
-  // 获取用户的上级部门负责人信息
-  const id = data.deptId.pop()
-  // 查找负责人信息
-  let dept = Dept.findById(id)
-  // 获取人事部门和财务部门负责人信息
-  let userList = await Dept.find({deptName: {$in: ['人事部门', '财务部门']}})
-
-  // 当前审批人
-  let curAuditUserName = dept.userName;
-  let auditFlows = [
-    {userId: dept.userId, userName: dept.userName, userEmail: dept.userEmail}
-  ]
-  userList.map(item => {
-    auditFlows.push({userId: item.userId, userName: item.userName, userEmail: item.userEmail})
-  })
-  let res = await Leave.create(params)
-  ctx.body = util.success("", "创建成功")
-
+  if (action === 'create') {
+    // XJ202220727, 生成请假单号
+    let orderNo = "XJ"
+    orderNo += util.formatDate(new Date(), "yyyyMMdd")
+    const total = await Leave.countDocuments()
+    params.orderNo = orderNo + total
+    // 获取用户的上级部门负责人信息
+    const id = data.deptId.pop()
+    // 查找负责人信息
+    let dept = await Dept.findById(id)
+    // 获取人事部门和财务部门负责人信息
+    let userList = await Dept.find({deptName: {$in: ['人事部门', '财务部门']}})
+    let auditUsers = dept.userName;
+    // 当前审批人
+    let auditFlows = [
+      {userId: dept.userId, userName: dept.userName, userEmail: dept.userEmail}
+    ]
+    userList.map(item => {
+      auditFlows.push({userId: item.userId, userName: item.userName, userEmail: item.userEmail})
+      auditUsers += ',' + item.userName
+    })
+    params.auditUsers = auditUsers
+    params.curAuditUserName = dept.userName;
+    params.auditFlows = auditFlows
+    params.auditFlows = []
+    params.applyUser = {
+      userId: data.userId,
+      userName: data.userName,
+      userEmail: data.userEmail
+    }
+    let res = await Leave.create(params)
+    ctx.body = util.success("", "创建成功")
+  } else {
+    let res = await Leave.findByIdAndUpdate(_id, {applyState: 5})
+    ctx.body = util.success('', '操作成功')
+  }
 })
 
 module.exports = router

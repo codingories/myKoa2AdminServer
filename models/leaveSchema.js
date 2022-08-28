@@ -9,7 +9,7 @@ const leaveSchema = mongoose.Schema({
     userName: String,
     userEmail: String
   },
-  leaveTIme: String,
+  leaveTime: String,
   reasons: String,
   auditUsers: String,
   curAuditUserName: String,

@@ -15,9 +15,10 @@ router.prefix('/users')
 router.post('/login', async (ctx) => {
   // try catch防止数据库报错
   try {
-    const {userName, userPwd} = ctx.request.body;
+    let {userName, userPwd} = ctx.request.body;
     // 根据用户名和密码查询
     // 返回数据库指定的字段，方式一字符串加空格
+    userPwd = md5(userPwd)
     const res = await User.findOne({userName, userPwd}, 'userId userName userEmail state role deptId roleList')
     // 第二种方式通过json，1返回0不反，只有userId
     // const res = await User.findOne({userName, userPwd}, {'userId': 1, '_id': 0})
@@ -70,12 +71,10 @@ router.get('/list', async (ctx) => {
 
 // 用户删除/批量删除
 router.post('/delete', async (ctx) => {
-  console.log('fuck delete')
   const {userIds} = ctx.request.body
   // User.updateMany({ $or: [{ userId: 10001 }, { userId: 10002 }] })
   //$in userIds可能是一个数组  userid是否包含在这个数组里
   const res = await User.updateMany({userId: {$in: userIds}}, {state: 2})
-  console.log('res fuck', res)
   if (res.matchedCount) {
     ctx.body = util.success(res, `共删除成功${res.matchedCount}条`)
     return
@@ -85,7 +84,6 @@ router.post('/delete', async (ctx) => {
 
 // 用户新增/编辑
 router.post('/operate', async (ctx) => {
-  console.log('fuk operate')
   const {
     userId,
     userName,
