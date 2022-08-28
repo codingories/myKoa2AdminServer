@@ -8,7 +8,6 @@ const User = require('../models/userSchema')
 const Menu = require('../models/menuSchema')
 const Role = require('../models/roleSchema')
 const Counter = require('../models/counterSchema')
-
 const util = require('../utils/util')
 const jwt = require('jsonwebtoken')
 router.prefix('/users')
