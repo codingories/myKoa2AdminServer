@@ -15,20 +15,18 @@ router.prefix('/leave')
 
 router.get('/list', async (ctx) => {
   let {applyState, type} = ctx.request.query;
-  console.log('applyState fuck -->', applyState)
+  console.log('applyState', applyState, typeof applyState)
   const {page, skipIndex} = util.pager(ctx.request.query)
   let authorization = ctx.request.headers.authorization
   let {data} = util.decoded(authorization)
   try {
     let params = {};
     if (type === 'approve') {
-      if (applyState == 1) {
-        console.log('1111fuck')
+      if (applyState === '1' || applyState === '2') {
         // 审核人是当前的登录用户
         params.curAuditUserName = data.userName
-        params.applyState = 1
-      } else if (applyState > 1) {
-        console.log('2222fuck')
+        params.$or = [{applyState: 1}, {applyState: 2}]
+      } else if (applyState > 2) {
         // 这里用到mongodb里面的子文档查询，非常重要
         params = {
           // 子文档里面的userId 等于 当前的登录人
@@ -36,7 +34,6 @@ router.get('/list', async (ctx) => {
           applyState
         }
       } else {
-        console.log('3333fuck')
         params = {
           // 子文档里面的userId 等于 当前的登录人
           "auditFlows.userId": data.userId,
@@ -47,8 +44,8 @@ router.get('/list', async (ctx) => {
       params = {
         "applyUser.userId": data.userId
       }
+      if (applyState) params.applyState = applyState;
     }
-    if (applyState) params.applyState = applyState;
     console.log('fuck params,', params)
     const query = Leave.find(params)
     const list = await query.skip(skipIndex).limit(page.pageSize)
@@ -106,5 +103,45 @@ router.post('/operate', async (ctx) => {
     ctx.body = util.success('', '操作成功')
   }
 })
+
+router.post("/approve", async (ctx) => {
+  const {action, remark, _id} = ctx.request.body;
+  let authorization = ctx.request.headers.authorization
+  let {data} = util.decoded(authorization)
+  let params = {}
+  try {
+    let doc = await Leave.findById(_id)
+    let auditLogs = doc.auditLogs || []
+    let applyState;
+    if (action === 'refuse') {
+      params.applyState = 3
+    } else {
+      // 审核通过
+      console.log('doc=>', doc.auditFlows)
+      if (doc.auditFlows.length === doc.auditLogs.length) {
+        ctx.body = util.success('当前申请单已处理，请勿重复提交')
+        return;
+      } else if(doc.auditFlows.length === doc.auditLogs.length + 1) {
+        params.applyState = 4
+      } else if (doc.auditFlows.length > doc.auditLogs.length) {
+        params.applyState = 2
+        params.curAuditUserName = doc.auditFlows[doc.auditLogs.length + 1].userName
+      }
+    }
+    auditLogs.push({
+      userId: data.userId,
+      userName: data.userName,
+      createTime: new Date(),
+      remark,
+      action: action === 'refuse' ? "审核拒绝" : "审核通过"
+    })
+    params.auditLogs = auditLogs
+    let res = await Leave.findByIdAndUpdate(_id, params)
+    ctx.body = util.success("", "处理成功");
+  } catch (error) {
+    ctx.body = util.fail(`查询异常: ${error.message}`)
+  }
+})
+
 
 module.exports = router
