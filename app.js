@@ -51,14 +51,6 @@ app.use(koajwt({secret: 'secret'}).unless({
   path: [/^\/api\/users\/login/]
 }))
 router.prefix('/api')
-
-router.get('/leave/count', (ctx) => {
-  // const token = ctx.request.headers.authorization.split(' ')[1]
-  // console.log('token', token)
-  // ctx.body = jwt.verify(token, 'secret')
-  ctx.body = 'body'
-})
-
 // 二级路由
 router.use(users.routes(), users.allowedMethods())
 router.use(menus.routes(), menus.allowedMethods())

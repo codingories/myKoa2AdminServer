@@ -121,7 +121,7 @@ router.post("/approve", async (ctx) => {
       if (doc.auditFlows.length === doc.auditLogs.length) {
         ctx.body = util.success('当前申请单已处理，请勿重复提交')
         return;
-      } else if(doc.auditFlows.length === doc.auditLogs.length + 1) {
+      } else if (doc.auditFlows.length === doc.auditLogs.length + 1) {
         params.applyState = 4
       } else if (doc.auditFlows.length > doc.auditLogs.length) {
         params.applyState = 2
@@ -143,5 +143,18 @@ router.post("/approve", async (ctx) => {
   }
 })
 
+router.get("/count", async (ctx) => {
+  let authorization = ctx.request.headers.authorization
+  let {data} = util.decoded(authorization)
+  try {
+    let params = {}
+    params.curAuditUserName = data.userName
+    params.$or = [{applyState: 1}, {applyState: 2}]
+    const total = await Leave.countDocuments(params)
+    ctx.body = util.success(total)
+  } catch (error) {
+    ctx.body = util.fail(`查询异常: ${error.message}`)
+  }
+})
 
 module.exports = router
