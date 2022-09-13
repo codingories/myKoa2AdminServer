@@ -2,6 +2,6 @@
  * 配置文件
  */
 module.exports = {
-  URL: 'mongodb://127.0.0.1:27017/my-manager'
+  URL: 'mongodb://150.158.10.2:27017/my-manager',
 }
 

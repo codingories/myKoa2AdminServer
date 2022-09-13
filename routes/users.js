@@ -42,7 +42,9 @@ router.post('/login', async (ctx) => {
 })
 
 router.get('/list', async (ctx) => {
+  console.log('fuck 11111')
   const {userId, userName, state} = ctx.request.query
+  console.log('userId,')
   // 处理分页，模块化处理，是第几个开始
   const {page, skipIndex} = util.pager(ctx.request.query)
   let params = {}
@@ -50,6 +52,7 @@ router.get('/list', async (ctx) => {
   if (userId) params.userId = userId
   if (userName) params.userName = userName
   if (state && state !== '0') params.state = state
+  console.log('params 222222',params)
   try {
     // 通过User 的model模型进行查找
     // 根据条件查询所有用户列表,第二个参数代表过滤掉_id ,userPwd字段，返回query对象
